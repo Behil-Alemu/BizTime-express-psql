@@ -18,7 +18,17 @@ router.get("/", async function(req, res, next) {
 router.get("/:id", async function(req, res, next) {
   try {
     const resp = await db.query(
-      "SELECT * FROM invoices WHERE id = $1", [req.params.id]);
+      `SELECT i.id, 
+      i.comp_code, 
+      i.amt, 
+      i.paid, 
+      i.add_date, 
+      i.paid_date, 
+      c.name, 
+      c.description 
+        FROM invoices AS i
+        INNER JOIN companies AS c ON (i.comp_code = c.code)  
+        WHERE id = $1`, [req.params.id]);
 
     if (resp.rows.length === 0) {
       let notFoundError = new Error(`There is no invoice with id '${req.params.id}`);
@@ -91,6 +101,8 @@ router.delete("/:id", async function(req, res, next) {
     return next(err);
   }
 });
+
+
 
 
 module.exports = router;
