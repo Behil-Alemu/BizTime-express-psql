@@ -66,14 +66,24 @@ router.put("/:id", async function(req, res, next) {
     if ("id" in req.body) {
       throw new ExpressError("Don't add id with JSON", 400)
     }
-    const { comp_code, amt, paid, add_date, paid_date } = req.body;
+    const { comp_code, amt, paid, add_date } = req.body;
     const { id } = req.params;
+
+    const currPaidDate = currResult.rows[0].paid_date;
+
+    if (!currPaidDate && paid) {
+      paidDate = new Date();
+    } else if (!paid) {
+      paidDate = null
+    } else {
+      paidDate = currPaidDate;
+    }
     const result = await db.query(
       `UPDATE invoices 
            SET comp_code=$1, amt=$2, paid=$3, add_date=$4, paid_date=$5
            WHERE id = $6
            RETURNING *`,
-      [comp_code, amt, paid, add_date, paid_date, id]);
+      [comp_code, amt, paid, add_date, paidDate, id]);
 
     if (result.rows.length === 0) {
       throw new ExpressError(`There is no invoice with id of '${req.params.id}`, 404);

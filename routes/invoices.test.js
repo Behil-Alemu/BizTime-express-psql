@@ -7,22 +7,34 @@ const db = require("../db");
 
 let testInvoices;
 
-beforeEach(async function() {
-    let result = await db.query(`
+beforeEach(async () => {
+    await db.query("SELECT setval('invoices_id_seq', 1, false)");
+
+    await db.query(`INSERT INTO
+    companies (code,name,description) VALUES ('appley','Appley pie','Maker of OSX.') RETURNING code`);
+
+     await db.query(`
       INSERT INTO
-      invoices (comp_code, amt, paid, add_date, paid_date) VALUES ('apple', 300, true, '2018-01-01')
-        RETURNING *`);
-        testInvoices = result.rows[0];
+      invoices 
+      (comp_code, amt, paid, add_date, paid_date) VALUES ('appley', 300, true, '2018-01-01', '2018-01-01')
+      RETURNING id`);
   });
 
+  describe("GET /invoices", () => {
+    test("Get a list with invoices", async () => {
+      const res = await request(app).get('/invoices')
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual({ invoices: testInvoices })
+    })
+  })
  
 
 
 
-  afterEach(async function(){
-    await db.query(`DELETE FROM users`)
+afterEach(async function(){
+    await db.query(`DELETE FROM invoices`)
   })
   
-  afterAll(async function(){
+afterAll(async function(){
     await db.end()
   })
